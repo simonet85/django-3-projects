@@ -41,7 +41,7 @@ def post_detail( request, year, month, day, post ) :
         comment_form = CommentForm()
     return render( request, 'blogsite/post/detail.html', {
         'post' : post, 
-        'comment': comments, 
+        'comments': comments, 
         'new_comment' : new_comment, 
         'comment_form' : comment_form
         })

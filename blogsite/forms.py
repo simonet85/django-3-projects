@@ -12,4 +12,4 @@ class CommentForm( forms.ModelForm ) :
     #To create a form from a model, you just need to indicate which model to use to build the form in the Meta class of the form.
     class Meta :
         model = Comment
-        fields = ('name', 'email', 'body')
+        fields = ['name', 'email', 'body']
