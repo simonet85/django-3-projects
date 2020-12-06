@@ -5,6 +5,7 @@ from .models import Post, Comment
 from .forms import EmailPostForm, CommentForm
 from django.core.mail import send_mail
 from taggit.models import Tag
+from django.db.models import Count
  
 def post_list( request, tag_slug=None ) :
     #posts = Post.published.all()
@@ -33,7 +34,15 @@ def post_list( request, tag_slug=None ) :
 def post_detail( request, year, month, day, post ) :
     post = get_object_or_404(Post, slug=post, status = 'published', publish__year = year, publish__month = month, publish__day = day)
     
-    #List of active comments for this post
+    #List of similar posts
+    #Retrieve all tags for the current post
+    #.1 You retrieve a Python list of IDs for the tags of the current post. The values_list() QuerySet returns tuples with the values for the given fields. You pass flat=True to it to get single values such as [1, 2, 3, ...] instead of one-tuples such as [(1,), (2,), (3,) ...].
+    post_tags_ids = post.tags.values_list( 'id', flat=True )
+    #Exclude the current post from that list to avoid recommending the same post
+    similar_posts = Post.published.filter(tags__in=post_tags_ids).exclude( id=post.id )
+    #You use the Count aggregation function to generate a calculated field—same_tags—that contains the number of tags shared with all the tags queried.
+    similar_posts = similar_posts.annotate( same_tags=Count('tags')).order_by('-same_tags', '-publish')[:4]
+    #You order the result by the number of shared tags (descending order) and by publish to display recent posts first for the posts with the same number of shared tags. You slice the result to retrieve only the first four posts.
     comments = post.comments.filter( active=True )
     new_comment = None
     if request.method == 'POST' :
@@ -52,7 +61,8 @@ def post_detail( request, year, month, day, post ) :
         'post' : post, 
         'comments': comments, 
         'new_comment' : new_comment, 
-        'comment_form' : comment_form
+        'comment_form' : comment_form,
+        'similar_posts': similar_posts,
         })
 
 class PostListView(ListView) :
