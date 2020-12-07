@@ -112,11 +112,16 @@ def post_search( request ) :
             query = form.cleaned_data['query']
             
             #results = Post.published.annotate( search=SearchVector('title', 'body'),).filter( search=query )
-            
-            search_vector = SearchVector( 'title', 'body')
+            #weight queries
+            search_vector = SearchVector( 'title', weight='A')+SearchVector( 'body', weight='B')
             search_query = SearchQuery( query )
             
-            results = Post.published.annotate( search = search_vector,rank=SearchRank( search_vector, search_query)).filter( search=search_query ).order_by( '-rank' )
+            #results = Post.published.annotate( search = search_vector,rank=SearchRank( search_vector, search_query)).filter( rank__gte=0.3 ).order_by( '-rank' )
+            
+            #Searching with trigram similarity
+            results = Post.published.annotate(
+                similarity=TrigramSimilarity('title', query),
+            ).filter( similarity__gt=0.1).order_by('-similarity')
             
     return render( request, 'blogsite/post/search.html',{
         'form' : form,
