@@ -21,6 +21,7 @@ from blogsite.sitemaps import PostSitemap
 sitemaps = {
     'posts' : PostSitemap,
 }
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('blogsite/', include('blogsite.urls', namespace='blogsite')),
